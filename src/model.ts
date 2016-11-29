@@ -1,6 +1,6 @@
 import { Edm, odata } from "odata-v4-server";
 import * as mssql from "mssql";
-import { mssqlRequest, default as mssqlConnection } from "./connection";
+import mssqlRequest from "./request";
 
 @Edm.Annotate({
     term: "UI.DisplayName",
@@ -68,7 +68,7 @@ export class Product{
 
     @Edm.Action
     async invertDiscontinued(@odata.result result:Product) {
-        let request = await mssqlRequest();
+        const request = await mssqlRequest();
         request.input("discontinued", !result.Discontinued);
         request.input("id", result.Id);
         await request.query(`UPDATE Products SET Discontinued = @discontinued WHERE Id = @id`);
@@ -76,7 +76,7 @@ export class Product{
 
     @Edm.Action
     async setDiscontinued(@odata.result result:Product, @Edm.Boolean value:boolean) {
-        let request = await mssqlRequest();
+        const request = await mssqlRequest();
         request.input("discontinued", value);
         request.input("id", result.Id);
         await request.query(`UPDATE Products SET Discontinued = @discontinued WHERE Id = @id`);

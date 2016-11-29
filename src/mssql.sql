@@ -1,3 +1,6 @@
+-- TODO adatb neve legyen northwind
+-- TODO kommenteket vegyük ki
+
 USE master;
 --DROP DATABASE IF EXISTS northwind_mssql_test_db;
 --CREATE DATABASE northwind_mssql_test_db;
@@ -19,6 +22,8 @@ CREATE TABLE Products (
 	Id INT IDENTITY(1,1) CONSTRAINT pk_Products PRIMARY KEY
 --, CONSTRAINT fk_ProductCategory FOREIGN KEY (CategoryId) references Categories (Id)
 )  ON [PRIMARY];
+
+-- TODO próbáljuk meg a multi insertet, hogy 1-1 tranzakció legyen
 
 SET IDENTITY_INSERT Categories ON; -- Column names must be specified in insert statements
 INSERT INTO Categories (Description, Name, Id) VALUES ('Soft drinks','Beverages',1);
