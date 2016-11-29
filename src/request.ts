@@ -11,7 +11,7 @@ const dbConfig = {
 let connection = null;
 
 async function connect() {
-    return connection ? connection : await new sql.Connection(dbConfig).connect();
+    return connection || await new sql.Connection(dbConfig).connect();
 }
 
 export default async function(): Promise<any> {
