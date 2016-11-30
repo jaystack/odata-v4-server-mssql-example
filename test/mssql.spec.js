@@ -1,5 +1,3 @@
-// TODO id assign-ok kitörlése
-
 "use strict";
 
 const { NorthwindServer } = require("../lib/server");
@@ -8,25 +6,46 @@ const {expect} = require("chai");
 const products = require("../lib/products").default;
 const categories = require("../lib/categories").default;
 
-function createTest(testcase, command, compare, body){
+function sortById(a, b) {
+    return (a.Id < b.Id) ? -1 : (a.Id > b.Id) ? 1 : 0
+}
+
+function sortBodyValueIfNeeded(needToSortById, result) {
+    return new Promise((resolve, reject) => {
+        if (needToSortById && result.body && result.body.value && Array.isArray(result.body.value)) {
+            const newBody = Object.assign({}, result.body);
+            newBody.value.sort(sortById);
+            return resolve(Object.assign({}, result, {body: newBody}));
+        }
+        return resolve(result);
+    });
+}
+
+function createTest(testcase, command, compare, body = undefined, needToSortById = false){
     it(`${testcase} (${command})`, () => {
         let test = command.split(" ");
-        return NorthwindServer.execute(test.slice(1).join(" "), test[0], body).then((result) => {
-            expect(result).to.deep.equal(compare);
-        });
+        return NorthwindServer.execute(test.slice(1).join(" "), test[0], body)
+            .then((result) => sortBodyValueIfNeeded(needToSortById, result))
+            .then((result) => {
+                expect(result).to.deep.equal(compare);
+            });
     });
 }
 
-createTest.only = function(testcase, command, compare, body) {
+createTest.only = function(testcase, command, compare, body = undefined, needToSortById = false) {
+    console.log("body:", body);
+    console.log("needToSortById:", needToSortById);
     it.only(`${testcase} (${command})`, () => {
         let test = command.split(" ");
-        return NorthwindServer.execute(test.slice(1).join(" "), test[0], body).then((result) => {
-            expect(result).to.deep.equal(compare);
-        });
+        return NorthwindServer.execute(test.slice(1).join(" "), test[0], body)
+            .then((result) => sortBodyValueIfNeeded(needToSortById, result))
+            .then((result) => {
+                expect(result).to.deep.equal(compare);
+            });
     });
 }
 
-function xcreateTest(testcase, command, compare, body) {
+function xcreateTest(testcase, command, compare, body = undefined, sortById = false) {
     xit(`${testcase} (${command})`, () => {});
 }
 
@@ -48,7 +67,7 @@ describe("OData V4 example server", () => {
             },
             elementType: Product,
             contentType: "application/json"
-        });
+        }, undefined, true);
 
         createTest("should get products by filter", "GET /Products?$filter=Name eq 'Chai'", {
             statusCode: 200,
@@ -99,11 +118,11 @@ describe("OData V4 example server", () => {
             contentType: "application/json"
         });
 
-        createTest("should get product by key", "GET /Products(1)", { //''578f2b8c12eaebabec4af23c''->1
+        createTest("should get product by key", "GET /Products(1)", {
             statusCode: 200,
             body: Object.assign({
                 "@odata.context": "http://localhost/$metadata#Products/$entity"
-            }, products.filter(product => product.Id == 1).map(product => Object.assign({}, product, { //'"578f2b8c12eaebabec4af23c"'=>1
+            }, products.filter(product => product.Id == 1).map(product => Object.assign({}, product, {
                     "@odata.id": `http://localhost/Products(${product.Id})`,
                     "@odata.editLink": `http://localhost/Products(${product.Id})`
                 }))[0]
@@ -134,22 +153,22 @@ describe("OData V4 example server", () => {
         });
 
         it("should update product", () => {
-            return NorthwindServer.execute("/Products(1)", "PUT", { //''578f2b8c12eaebabec4af23c''->1
+            return NorthwindServer.execute("/Products(1)", "PUT", {
                 Name: "Chai (updated)"
             }).then((result) => {
                 expect(result).to.deep.equal({
                     statusCode: 204
                 });
 
-                return NorthwindServer.execute("/Products(1)", "GET").then((result) => { //''578f2b8c12eaebabec4af23c''->1
+                return NorthwindServer.execute("/Products(1)", "GET").then((result) => {
                     expect(result).to.deep.equal({
                         statusCode: 200,
                         body: {
                             "@odata.context": "http://localhost/$metadata#Products/$entity",
-                            "@odata.id": `http://localhost/Products(1)`, //''578f2b8c12eaebabec4af23c''->1
-                            "@odata.editLink": `http://localhost/Products(1)`, //''578f2b8c12eaebabec4af23c''->1
+                            "@odata.id": `http://localhost/Products(1)`,
+                            "@odata.editLink": `http://localhost/Products(1)`,
                             Name: "Chai (updated)",
-                            Id: 1 //'"578f2b8c12eaebabec4af23c"'=>1
+                            Id: 1
                         },
                         elementType: Product,
                         contentType: "application/json"
@@ -159,17 +178,17 @@ describe("OData V4 example server", () => {
         });
 
         it("should delta update product", () => {
-            return NorthwindServer.execute("/Products(1)", "PATCH", { //''578f2b8c12eaebabec4af23c''->1
+            return NorthwindServer.execute("/Products(1)", "PATCH", {
                 Name: "Chai (updated)"
             }).then((result) => {
                 expect(result).to.deep.equal({
                     statusCode: 204
                 });
 
-                return NorthwindServer.execute("/Products(1)", "GET").then((result) => { //''578f2b8c12eaebabec4af23c''->1
+                return NorthwindServer.execute("/Products(1)", "GET").then((result) => {
                     expect(result).to.deep.equal({
                         statusCode: 200,
-                        body:  products.filter(product => product.Id == 1).map(product => Object.assign({}, product, { //'"578f2b8c12eaebabec4af23c"'=>1
+                        body:  products.filter(product => product.Id == 1).map(product => Object.assign({}, product, {
                             "@odata.context": "http://localhost/$metadata#Products/$entity",
                             "@odata.id": `http://localhost/Products(${product.Id})`,
                             "@odata.editLink": `http://localhost/Products(${product.Id})`,
@@ -183,12 +202,12 @@ describe("OData V4 example server", () => {
         });
 
         it("should delete product", () => {
-            return NorthwindServer.execute("/Products(1)", "DELETE").then((result) => { //''578f2b8c12eaebabec4af23c''->1
+            return NorthwindServer.execute("/Products(1)", "DELETE").then((result) => {
                 expect(result).to.deep.equal({
                     statusCode: 204
                 });
 
-                return NorthwindServer.execute("/Products(1)", "GET").then(() => { //''578f2b8c12eaebabec4af23c''->1
+                return NorthwindServer.execute("/Products(1)", "GET").then(() => {
                     throw new Error("Product should be deleted.");
                 }, (err) => {
                     expect(err.name).to.equal("ResourceNotFoundError");
@@ -196,11 +215,11 @@ describe("OData V4 example server", () => {
             });
         });
 
-        createTest("should get category by product", "GET /Products(1)/Category", { //''578f2b8c12eaebabec4af23c''->1
+        createTest("should get category by product", "GET /Products(1)/Category", {
             statusCode: 200,
             body: Object.assign({
                 "@odata.context": "http://localhost/$metadata#Categories/$entity"
-            }, categories.filter(category => category.Id == 1).map(category => Object.assign({}, category, { //'"578f2baa12eaebabec4af289"'=>1
+            }, categories.filter(category => category.Id == 1).map(category => Object.assign({}, category, {
                     "@odata.id": `http://localhost/Categories(${category.Id})`,
                     "@odata.editLink": `http://localhost/Categories(${category.Id})`
                 }))[0]
@@ -210,19 +229,19 @@ describe("OData V4 example server", () => {
         });
 
         it("should create category reference on product", () => {
-            return NorthwindServer.execute("/Products(1)/Category/$ref", "POST", { //''578f2b8c12eaebabec4af23c''->1
-                "@odata.id": "http://localhost/Categories(2)" //''578f2baa12eaebabec4af28a''->2
+            return NorthwindServer.execute("/Products(1)/Category/$ref", "POST", {
+                "@odata.id": "http://localhost/Categories(2)"
             }).then((result) => {
                 expect(result).to.deep.equal({
                     statusCode: 204
                 });
 
-                return NorthwindServer.execute("/Products(1)/Category", "GET").then((result) => { //''578f2b8c12eaebabec4af23c''->1
+                return NorthwindServer.execute("/Products(1)/Category", "GET").then((result) => {
                     expect(result).to.deep.equal({
                         statusCode: 200,
                         body: Object.assign({
                             "@odata.context": "http://localhost/$metadata#Categories/$entity"
-                        }, categories.filter(category => category.Id == 2).map(category => Object.assign({}, category, { //'"578f2baa12eaebabec4af28a"'=>2
+                        }, categories.filter(category => category.Id == 2).map(category => Object.assign({}, category, {
                                 "@odata.id": `http://localhost/Categories(${category.Id})`,
                                 "@odata.editLink": `http://localhost/Categories(${category.Id})`
                             }))[0]
@@ -235,19 +254,19 @@ describe("OData V4 example server", () => {
         });
 
         it("should update category reference on product", () => {
-            return NorthwindServer.execute("/Products(1)/Category/$ref", "PUT", { //''578f2b8c12eaebabec4af23c''->1
-                "@odata.id": "http://localhost/Categories(2)" //''578f2baa12eaebabec4af28a''->2
+            return NorthwindServer.execute("/Products(1)/Category/$ref", "PUT", {
+                "@odata.id": "http://localhost/Categories(2)"
             }).then((result) => {
                 expect(result).to.deep.equal({
                     statusCode: 204
                 });
 
-                return NorthwindServer.execute("/Products(1)/Category", "GET").then((result) => { //''578f2b8c12eaebabec4af23c''->1
+                return NorthwindServer.execute("/Products(1)/Category", "GET").then((result) => {
                     expect(result).to.deep.equal({
                         statusCode: 200,
                         body: Object.assign({
                             "@odata.context": "http://localhost/$metadata#Categories/$entity"
-                        }, categories.filter(category => category.Id == 2).map(category => Object.assign({}, category, { //'"578f2baa12eaebabec4af28a"'=>2
+                        }, categories.filter(category => category.Id == 2).map(category => Object.assign({}, category, {
                                 "@odata.id": `http://localhost/Categories(${category.Id})`,
                                 "@odata.editLink": `http://localhost/Categories(${category.Id})`
                             }))[0]
@@ -260,12 +279,12 @@ describe("OData V4 example server", () => {
         });
 
         it("should delete category reference on product", () => {
-            return NorthwindServer.execute("/Products(1)/Category/$ref", "DELETE").then((result) => { //''578f2b8c12eaebabec4af23c''->1
+            return NorthwindServer.execute("/Products(1)/Category/$ref", "DELETE").then((result) => {
                 expect(result).to.deep.equal({
                     statusCode: 204
                 });
 
-                return NorthwindServer.execute("/Products(1)/Category", "GET").then((result) => { //''578f2b8c12eaebabec4af23c''->1
+                return NorthwindServer.execute("/Products(1)/Category", "GET").then((result) => {
                     throw new Error("Category reference should be deleted.");
                 }, (err) => {
                     expect(err.name).to.equal("ResourceNotFoundError");
@@ -302,7 +321,7 @@ describe("OData V4 example server", () => {
             contentType: "application/json"
         });
 
-        createTest("should get the price of a product", "GET /Products(1)/Northwind.getUnitPrice()", { //''578f2b8c12eaebabec4af23c''->1
+        createTest("should get the price of a product", "GET /Products(1)/Northwind.getUnitPrice()", {
             statusCode: 200,
             body: {
                 value: 39,
@@ -313,18 +332,18 @@ describe("OData V4 example server", () => {
         });
 
         it("should invert Discontinued value on a product", () => {
-            return NorthwindServer.execute("/Products(76)/Northwind.invertDiscontinued", "POST") //''578f2b8c12eaebabec4af288''->76
+            return NorthwindServer.execute("/Products(76)/Northwind.invertDiscontinued", "POST")
             .then((result) => {
                 expect(result).to.deep.equal({
                     statusCode: 204
                 });
 
-                return NorthwindServer.execute("/Products(76)", "GET").then((result) => { //''578f2b8c12eaebabec4af288''->76
+                return NorthwindServer.execute("/Products(76)", "GET").then((result) => {
                     expect(result).to.deep.equal({
                         statusCode: 200,
                         body: Object.assign({
                             "@odata.context": "http://localhost/$metadata#Products/$entity"
-                        }, products.filter(product => product.Id == 76).map(product => Object.assign({}, product, { //'"578f2b8c12eaebabec4af288"'=>76
+                        }, products.filter(product => product.Id == 76).map(product => Object.assign({}, product, {
                                 "@odata.id": `http://localhost/Products(${product.Id})`,
                                 "@odata.editLink": `http://localhost/Products(${product.Id})`,
                                 Discontinued: true
@@ -338,18 +357,18 @@ describe("OData V4 example server", () => {
         });
 
         it("should set Discontinued value on a product", () => {
-            return NorthwindServer.execute("/Products(2)/Northwind.setDiscontinued", "POST", {value: true}) //''578f2b8c12eaebabec4af23d''->2
+            return NorthwindServer.execute("/Products(2)/Northwind.setDiscontinued", "POST", {value: true})
             .then((result) => {
                 expect(result).to.deep.equal({
                     statusCode: 204
                 });
 
-                return NorthwindServer.execute("/Products(2)", "GET").then((result) => { //''578f2b8c12eaebabec4af23d''->2
+                return NorthwindServer.execute("/Products(2)", "GET").then((result) => {
                     expect(result).to.deep.equal({
                         statusCode: 200,
                         body: Object.assign({
                             "@odata.context": "http://localhost/$metadata#Products/$entity"
-                        }, products.filter(product => product.Id == 2).map(product => Object.assign({}, product, { //'"578f2b8c12eaebabec4af23d"'=>2
+                        }, products.filter(product => product.Id == 2).map(product => Object.assign({}, product, {
                                 "@odata.id": `http://localhost/Products(${product.Id})`,
                                 "@odata.editLink": `http://localhost/Products(${product.Id})`,
                                 Discontinued: true
@@ -363,18 +382,18 @@ describe("OData V4 example server", () => {
         });
 
         it("should swap two products UnitPrice", () => {
-            return NorthwindServer.execute("/Products/Northwind.swapPrice", "POST", {a: 74, b: 75}) //'"578f2b8c12eaebabec4af287"'=>75
+            return NorthwindServer.execute("/Products/Northwind.swapPrice", "POST", {a: 74, b: 75})
             .then((result) => {
                 expect(result).to.deep.equal({
                     statusCode: 204
                 });
 
-                return NorthwindServer.execute("/Products(74)", "GET").then((result) => { //''578f2b8c12eaebabec4af286''->74
+                return NorthwindServer.execute("/Products(74)", "GET").then((result) => {
                     expect(result).to.deep.equal({
                         statusCode: 200,
                         body: Object.assign({
                             "@odata.context": "http://localhost/$metadata#Products/$entity"
-                        }, products.filter(product => product.Id == 74).map(product => Object.assign({}, product, { //'"578f2b8c12eaebabec4af286"'=>74
+                        }, products.filter(product => product.Id == 74).map(product => Object.assign({}, product, {
                                 "@odata.id": `http://localhost/Products(${product.Id})`,
                                 "@odata.editLink": `http://localhost/Products(${product.Id})`,
                                 UnitPrice: 18
@@ -385,12 +404,12 @@ describe("OData V4 example server", () => {
                     })
                 })
                 .then(() => {
-                    return NorthwindServer.execute("/Products(75)", "GET").then((result) => { //''578f2b8c12eaebabec4af287''->75
+                    return NorthwindServer.execute("/Products(75)", "GET").then((result) => {
                         expect(result).to.deep.equal({
                             statusCode: 200,
                             body: Object.assign({
                                 "@odata.context": "http://localhost/$metadata#Products/$entity"
-                            }, products.filter(product => product.Id == 75).map(product => Object.assign({}, product, { //'"578f2b8c12eaebabec4af287"'=>75
+                            }, products.filter(product => product.Id == 75).map(product => Object.assign({}, product, {
                                     "@odata.id": `http://localhost/Products(${product.Id})`,
                                     "@odata.editLink": `http://localhost/Products(${product.Id})`,
                                     UnitPrice: 7.75
@@ -405,18 +424,18 @@ describe("OData V4 example server", () => {
         });
 
         it("should discount a product", () => {
-            return NorthwindServer.execute("/Products/Northwind.discountProduct", "POST", {productId: 3, percent: 10}) //'"578f2b8c12eaebabec4af23e"'=>3
+            return NorthwindServer.execute("/Products/Northwind.discountProduct", "POST", {productId: 3, percent: 10})
             .then((result) => {
                 expect(result).to.deep.equal({
                     statusCode: 204
                 });
 
-                return NorthwindServer.execute("/Products(3)", "GET").then((result) => { //''578f2b8c12eaebabec4af23e''->3
+                return NorthwindServer.execute("/Products(3)", "GET").then((result) => {
                     expect(result).to.deep.equal({
                         statusCode: 200,
                         body: Object.assign({
                             "@odata.context": "http://localhost/$metadata#Products/$entity"
-                        }, products.filter(product => product.Id == 3).map(product => Object.assign({}, product, { //'"578f2b8c12eaebabec4af23e"'=>3
+                        }, products.filter(product => product.Id == 3).map(product => Object.assign({}, product, {
                                 "@odata.id": `http://localhost/Products(${product.Id})`,
                                 "@odata.editLink": `http://localhost/Products(${product.Id})`,
                                 UnitPrice: 9
@@ -442,7 +461,7 @@ describe("OData V4 example server", () => {
             },
             elementType: Category,
             contentType: "application/json"
-        });
+        }, undefined, true);
 
         createTest("should get categories by filter", "GET /Categories?$filter=Name eq 'Beverages'", {
             statusCode: 200,
@@ -472,11 +491,11 @@ describe("OData V4 example server", () => {
             contentType: "application/json"
         });
 
-        createTest("should get category by key", "GET /Categories(1)", { //''578f2baa12eaebabec4af289''->1
+        createTest("should get category by key", "GET /Categories(1)", {
             statusCode: 200,
             body: Object.assign({
                 "@odata.context": "http://localhost/$metadata#Categories/$entity"
-            }, categories.filter(category => category.Id == 1).map(category => Object.assign({}, category, { //'"578f2baa12eaebabec4af289"'=>1
+            }, categories.filter(category => category.Id == 1).map(category => Object.assign({}, category, {
                     "@odata.id": `http://localhost/Categories(${category.Id})`,
                     "@odata.editLink": `http://localhost/Categories(${category.Id})`
                 }))[0]
@@ -507,22 +526,22 @@ describe("OData V4 example server", () => {
         });
 
         it("should update category", () => {
-            return NorthwindServer.execute("/Categories(1)", "PUT", { //''578f2baa12eaebabec4af289''->1
+            return NorthwindServer.execute("/Categories(1)", "PUT", {
                 Name: "Beverages (updated)"
             }).then((result) => {
                 expect(result).to.deep.equal({
                     statusCode: 204
                 });
 
-                return NorthwindServer.execute("/Categories(1)", "GET").then((result) => { //''578f2baa12eaebabec4af289''->1
+                return NorthwindServer.execute("/Categories(1)", "GET").then((result) => {
                     expect(result).to.deep.equal({
                         statusCode: 200,
                         body: {
                             "@odata.context": "http://localhost/$metadata#Categories/$entity",
-                            "@odata.id": `http://localhost/Categories(1)`, //''578f2baa12eaebabec4af289''->1
-                            "@odata.editLink": `http://localhost/Categories(1)`, //''578f2baa12eaebabec4af289''->1
+                            "@odata.id": `http://localhost/Categories(1)`,
+                            "@odata.editLink": `http://localhost/Categories(1)`,
                             Name: "Beverages (updated)",
-                            Id: 1 //'"578f2baa12eaebabec4af289"'=>1
+                            Id: 1
                         },
                         elementType: Category,
                         contentType: "application/json"
@@ -532,17 +551,17 @@ describe("OData V4 example server", () => {
         });
 
         it("should delta update category", () => {
-            return NorthwindServer.execute("/Categories(1)", "PATCH", { //''578f2baa12eaebabec4af289''->1
+            return NorthwindServer.execute("/Categories(1)", "PATCH", {
                 Name: "Beverages (updated)"
             }).then((result) => {
                 expect(result).to.deep.equal({
                     statusCode: 204
                 });
 
-                return NorthwindServer.execute("/Categories(1)", "GET").then((result) => { //''578f2baa12eaebabec4af289''->1
+                return NorthwindServer.execute("/Categories(1)", "GET").then((result) => {
                     expect(result).to.deep.equal({
                         statusCode: 200,
-                        body:  categories.filter(category => category.Id == 1).map(category => Object.assign({ //'"578f2baa12eaebabec4af289"'=>1
+                        body:  categories.filter(category => category.Id == 1).map(category => Object.assign({
                             "@odata.context": "http://localhost/$metadata#Categories/$entity",
                             "@odata.id": `http://localhost/Categories(${category.Id})`,
                             "@odata.editLink": `http://localhost/Categories(${category.Id})`
@@ -557,12 +576,12 @@ describe("OData V4 example server", () => {
         });
 
         it("should delete category", () => {
-            return NorthwindServer.execute("/Categories(1)", "DELETE").then((result) => { //''578f2baa12eaebabec4af289''->1
+            return NorthwindServer.execute("/Categories(1)", "DELETE").then((result) => {
                 expect(result).to.deep.equal({
                     statusCode: 204
                 });
 
-                return NorthwindServer.execute("/Categories(1)", "GET").then(() => { //''578f2baa12eaebabec4af289''->1
+                return NorthwindServer.execute("/Categories(1)", "GET").then(() => {
                     throw new Error("Product should be deleted.");
                 }, (err) => {
                     expect(err.name).to.equal("ResourceNotFoundError");
@@ -570,11 +589,11 @@ describe("OData V4 example server", () => {
             });
         });
 
-        createTest("should get products by category", "GET /Categories(1)/Products", { //''578f2baa12eaebabec4af289''->1
+        createTest("should get products by category", "GET /Categories(1)/Products", {
             statusCode: 200,
             body: {
-                "@odata.context": "http://localhost/$metadata#Categories(1)/Products", //''578f2baa12eaebabec4af289''->1
-                value: products.filter(product => product.CategoryId == 1).map(product => Object.assign({ //'"578f2baa12eaebabec4af289"'=>1
+                "@odata.context": "http://localhost/$metadata#Categories(1)/Products",
+                value: products.filter(product => product.CategoryId == 1).map(product => Object.assign({
                     "@odata.id": `http://localhost/Products(${product.Id})`,
                     "@odata.editLink": `http://localhost/Products(${product.Id})`
                 }, product))
@@ -583,12 +602,12 @@ describe("OData V4 example server", () => {
             contentType: "application/json"
         });
 
-        createTest("should get products by category", "GET /Categories(1)/Products(1)", { //''578f2baa12eaebabec4af289''->1
+        createTest("should get products by category", "GET /Categories(1)/Products(1)", {
             statusCode: 200,
             body: Object.assign({}, {
-                    "@odata.context": "http://localhost/$metadata#Products/$entity", //''578f2baa12eaebabec4af289''->1
+                    "@odata.context": "http://localhost/$metadata#Products/$entity",
                 },
-                products.filter(product => product.Id == 1 && product.CategoryId == 1).map(product => Object.assign({}, product, { //'"578f2baa12eaebabec4af289"'=>1
+                products.filter(product => product.Id == 1 && product.CategoryId == 1).map(product => Object.assign({}, product, {
                     "@odata.id": `http://localhost/Products(${product.Id})`,
                     "@odata.editLink": `http://localhost/Products(${product.Id})`
                 }))[0]
@@ -598,19 +617,19 @@ describe("OData V4 example server", () => {
         });
 
         it("should create product reference on category", () => {
-            return NorthwindServer.execute("/Categories(2)/Products/$ref", "POST", { //''578f2baa12eaebabec4af28a''->2
-                "@odata.id": "http://localhost/Products(1)" //''578f2b8c12eaebabec4af23c''->1
+            return NorthwindServer.execute("/Categories(2)/Products/$ref", "POST", {
+                "@odata.id": "http://localhost/Products(1)"
             }).then((result) => {
                 expect(result).to.deep.equal({
                     statusCode: 204
                 });
 
-                return NorthwindServer.execute("/Products(1)/Category", "GET").then((result) => { //''578f2b8c12eaebabec4af23c''->1
+                return NorthwindServer.execute("/Products(1)/Category", "GET").then((result) => {
                     expect(result).to.deep.equal({
                         statusCode: 200,
                         body: Object.assign({
                             "@odata.context": "http://localhost/$metadata#Categories/$entity"
-                        }, categories.filter(category => category.Id == 2).map(category => Object.assign({ //'"578f2baa12eaebabec4af28a"'=>2
+                        }, categories.filter(category => category.Id == 2).map(category => Object.assign({
                                 "@odata.id": `http://localhost/Categories(${category.Id})`,
                                 "@odata.editLink": `http://localhost/Categories(${category.Id})`
                             }, category))[0]
@@ -623,19 +642,19 @@ describe("OData V4 example server", () => {
         });
 
         it("should update product reference on category", () => {
-            return NorthwindServer.execute("/Categories(2)/Products/$ref", "PUT", { //''578f2baa12eaebabec4af28a''->2
-                "@odata.id": "http://localhost/Products(1)" //''578f2b8c12eaebabec4af23c''->1
+            return NorthwindServer.execute("/Categories(2)/Products/$ref", "PUT", {
+                "@odata.id": "http://localhost/Products(1)"
             }).then((result) => {
                 expect(result).to.deep.equal({
                     statusCode: 204
                 });
 
-                return NorthwindServer.execute("/Products(1)/Category", "GET").then((result) => { //''578f2b8c12eaebabec4af23c''->1
+                return NorthwindServer.execute("/Products(1)/Category", "GET").then((result) => {
                     expect(result).to.deep.equal({
                         statusCode: 200,
                         body: Object.assign({
                             "@odata.context": "http://localhost/$metadata#Categories/$entity"
-                        }, categories.filter(category => category.Id == 2).map(category => Object.assign({ //'"578f2baa12eaebabec4af28a"'=>2
+                        }, categories.filter(category => category.Id == 2).map(category => Object.assign({
                                 "@odata.id": `http://localhost/Categories(${category.Id})`,
                                 "@odata.editLink": `http://localhost/Categories(${category.Id})`
                             }, category))[0]
@@ -648,12 +667,12 @@ describe("OData V4 example server", () => {
         });
 
         it("should delete product reference on category", () => {
-            return NorthwindServer.execute("/Categories(1)/Products/$ref?$id=http://localhost/Products(1)", "DELETE").then((result) => { //''578f2b8c12eaebabec4af23c''->1
+            return NorthwindServer.execute("/Categories(1)/Products/$ref?$id=http://localhost/Products(1)", "DELETE").then((result) => {
                 expect(result).to.deep.equal({
                     statusCode: 204
                 });
 
-                return NorthwindServer.execute("/Products(1)/Category", "GET").then((result) => { //''578f2b8c12eaebabec4af23c''->1
+                return NorthwindServer.execute("/Products(1)/Category", "GET").then((result) => {
                     throw new Error("Category reference should be deleted.");
                 }, (err) => {
                     expect(err.name).to.equal("ResourceNotFoundError");

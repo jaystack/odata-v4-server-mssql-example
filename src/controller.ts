@@ -4,20 +4,16 @@ import { ODataController, Edm, odata, ODataQuery } from "odata-v4-server";
 import { Product, Category } from "./model";
 import mssqlRequest from "./request";
 import convertResults from "./utils/convertResults";
+import getConvertedValue from "./utils/getConvertedValue";
 
 @odata.type(Product)
 export class ProductsController extends ODataController {
-    
+
     @odata.GET
     async find( @odata.stream stream, @odata.query query: ODataQuery): Promise<Product[]|void> {
         const request = await mssqlRequest();
         const sqlQuery = createQuery(query);
-        // TODO Viktorral beszéljük meg, hogy nem lehetne-e default Id-val sorrendezni,
-        // mert ez így nem túl example-ös
         sqlQuery.parameters.forEach((value, name) => request.input(name, value));
-        if (!sqlQuery.orderby || sqlQuery.orderby == "1") {
-            sqlQuery.orderby = "Id";
-        }
         return request.query(sqlQuery.from("Products"));
     }
 
@@ -47,18 +43,22 @@ export class ProductsController extends ODataController {
         const request = await mssqlRequest();
         request.input("Id", id);
         request.input("Link", link);
-        const result = await request.query(`UPDATE Products SET CategoryId = @Link WHERE Id = @Id`);
-        // TODO próbáljuk meg megoldani, hogy length-szel térjünk vissza, bár elvileg mindegy
-        // és ne <any>-zünk akkor!
-        return <any>result; //.length; //rowCount;
+        const sqlCommand = `DECLARE @impactedId INT;
+        UPDATE Products SET CategoryId = @Link, @impactedId = Id WHERE Id = @Id;
+        SELECT @impactedId as 'ImpactedId';`;
+        const result = await request.query(sqlCommand);
+        return (result) ? 1 : 0;
     }
 
     @odata.DELETE("Category").$ref
     async unsetCategory( @odata.key id: number ): Promise<number> {
         const request = await mssqlRequest();
         request.input("Id", id);
-        const result = await request.query(`UPDATE Products SET CategoryId = NULL WHERE Id = @Id`); // TODO: 0 / 1 -et kell visszaadni
-        return <any>result; //.length; //rowCount;
+        const sqlCommand = `DECLARE @impactedId INT;
+        UPDATE Products SET CategoryId = NULL, @impactedId = Id WHERE Id = @Id;
+        SELECT @impactedId as 'ImpactedId';`;
+        const result = await request.query(sqlCommand);
+        return (result) ? 1 : 0;
     }
 
     @odata.POST
@@ -77,15 +77,9 @@ export class ProductsController extends ODataController {
         const sqlCommandDelete = `DELETE FROM Products OUTPUT deleted.* WHERE Id = ${id}`;
         await request.query(sqlCommandDelete);
         const product = Object.assign({}, data, { Id: id });
-        // TODO map-eljünk, mint az előzőnél
-        const columns: string[] = [];
-        const insertedColumns: string[] = [];
-        const values: any[] = [];
-        Object.keys(product).forEach((key: string) => {
-            columns.push(key);
-            insertedColumns.push("inserted." + key);
-            values.push(getConvertedValue(product[key]));
-        });
+        const columns = Object.keys(product);
+        const insertedColumns = Object.keys(product).map(key => "inserted." + key);
+        const values = Object.keys(product).map(key => getConvertedValue(product[key]));
         const sqlCommand = `SET IDENTITY_INSERT Products ON;
         INSERT INTO Products (${columns.join(", ")}) OUTPUT ${insertedColumns.join(", ")} VALUES (${values.join(", ")});
         SET IDENTITY_INSERT Products OFF;`;
@@ -96,11 +90,7 @@ export class ProductsController extends ODataController {
     @odata.PATCH
     async update( @odata.key id: string, @odata.body delta: any ): Promise<number> {
         const request = await mssqlRequest();
-        // TODO map
-        const sets: any[] = [];
-        Object.keys(delta).forEach((key: string) => {
-            sets.push(key + "=" + getConvertedValue(delta[key]));
-        });
+        const sets = Object.keys(delta).map(key => key + "=" + getConvertedValue(delta[key]));
         const sqlCommand = `DECLARE @impactedId INT;
         UPDATE Products SET ${sets.join(", ")}, @impactedId = Id WHERE Id = ${id};
         SELECT @impactedId as 'ImpactedId';`;
@@ -158,11 +148,7 @@ export class CategoriesController extends ODataController {
     async find( @odata.stream stream, @odata.query query: ODataQuery): Promise<Category[]|void> {
         const request = await mssqlRequest();
         const sqlQuery = createQuery(query);
-        // TODO itt is Viktor
         sqlQuery.parameters.forEach((value, name) => request.input(name, value));
-        if (!sqlQuery.orderby || sqlQuery.orderby == "1") {
-            sqlQuery.orderby = "Id";
-        }
         return request.query(sqlQuery.from("Categories"));
     }
 
@@ -203,29 +189,30 @@ export class CategoriesController extends ODataController {
         const request = await mssqlRequest();
         request.input("Id", id);
         request.input("Link", link);
-        const result = await request.query(`UPDATE Products SET CategoryId = @Id WHERE Id = @Link`);
-        return <any>result; //.length; //rowCount;
+        const sqlCommand = `DECLARE @impactedId INT;
+        UPDATE Products SET CategoryId = @Id, @impactedId = Id WHERE Id = @Link;
+        SELECT @impactedId as 'ImpactedId';`;
+        const result = await request.query(sqlCommand);
+        return (result) ? 1 : 0;
     }
 
     @odata.DELETE("Products").$ref
     async unsetCategory( @odata.key id: number, @odata.link link: number ): Promise<number> {
         const request = await mssqlRequest();
         request.input("Id", id);
-        const result = await request.query(`UPDATE Products SET CategoryId = NULL WHERE Id = @Id`);
-        return <any>result; //.length; //rowCount;
+        const sqlCommand = `DECLARE @impactedId INT;
+        UPDATE Products SET CategoryId = NULL, @impactedId = Id WHERE Id = @Id;
+        SELECT @impactedId as 'ImpactedId';`;
+        const result = await request.query(sqlCommand);
+        return (result) ? 1 : 0;
     }
 
 
   @odata.POST
     async insert( @odata.body data: any): Promise<Category> {
         const request = await mssqlRequest();
-        // TODO map
-        const columns: string[] = [];
-        const values: any[] = [];
-        Object.keys(data).forEach((key: string) => {
-            columns.push(key);
-            values.push(getConvertedValue(data[key]));
-        });
+        const columns = Object.keys(data);
+        const values = Object.keys(data).map(key => getConvertedValue(data[key]));
         const sqlCommand = `INSERT INTO Categories (${columns.join(", ")}) OUTPUT inserted.* VALUES (${values.join(", ")});`;
         const result = await request.query(sqlCommand);
         return convertResults(result)[0];
@@ -238,15 +225,9 @@ export class CategoriesController extends ODataController {
         const sqlCommandDelete = `DELETE FROM Categories OUTPUT deleted.* WHERE Id = ${id}`;
         await request.query(sqlCommandDelete);
         const category = Object.assign({}, data, { Id: id });
-        // TODO map
-        const columns: string[] = [];
-        const insertedColumns: string[] = [];
-        const values: any[] = [];
-        Object.keys(category).forEach((key: string) => {
-            columns.push(key);
-            insertedColumns.push("inserted." + key);
-            values.push(getConvertedValue(category[key]));
-        });
+        const columns = Object.keys(category);
+        const insertedColumns = Object.keys(category).map(key => "inserted." + key);
+        const values = Object.keys(category).map(key => getConvertedValue(category[key]));
         const sqlCommand = `SET IDENTITY_INSERT Categories ON;
         INSERT INTO Categories (${columns.join(", ")}) OUTPUT ${insertedColumns.join(", ")} VALUES (${values.join(", ")});
         SET IDENTITY_INSERT Categories OFF;`;
@@ -257,11 +238,7 @@ export class CategoriesController extends ODataController {
     @odata.PATCH // update the content of the row (delta)
     async update( @odata.key id: string, @odata.body delta: any ): Promise<number> {
         const request = await mssqlRequest();
-        // TODO map
-        const sets: any[] = [];
-        Object.keys(delta).forEach((key: string) => {
-            sets.push(key + "=" + getConvertedValue(delta[key]));
-        });
+        const sets = Object.keys(delta).map(key => key + "=" + getConvertedValue(delta[key]));
         const sqlCommand = `DECLARE @impactedId INT;
         UPDATE Categories SET ${sets.join(", ")}, @impactedId = Id WHERE Id = ${id};
         SELECT @impactedId as 'ImpactedId';`;
@@ -276,13 +253,4 @@ export class CategoriesController extends ODataController {
         const result = await <Promise<Product[]>>request.query(sqlCommand);
         return (Array.isArray(result)) ? result.length : 0;
     }
-}
-
-// TODO utils-ba
-
-function getConvertedValue(par: any): string {
-    if (par === true || par === "true") { return '1'; }
-    if (par === false || par === "false") { return '0'; }
-    if (typeof par === "string") { return "'" + par + "'"; }
-    return String(par);
 }
