@@ -1,10 +1,7 @@
--- TODO adatb neve legyen northwind
--- TODO kommenteket vegyük ki
-
 USE master;
---DROP DATABASE IF EXISTS northwind_mssql_test_db;
---CREATE DATABASE northwind_mssql_test_db;
-USE northwind_mssql_test_db;
+--DROP DATABASE IF EXISTS northwind;
+--CREATE DATABASE northwind;
+USE northwind;
 
 DROP TABLE IF EXISTS Products;
 DROP TABLE IF EXISTS Categories;
@@ -20,12 +17,9 @@ CREATE TABLE Products (
 	Name NVARCHAR(50),
 	Discontinued BIT,
 	Id INT IDENTITY(1,1) CONSTRAINT pk_Products PRIMARY KEY
---, CONSTRAINT fk_ProductCategory FOREIGN KEY (CategoryId) references Categories (Id)
 )  ON [PRIMARY];
 
--- TODO próbáljuk meg a multi insertet, hogy 1-1 tranzakció legyen
-
-SET IDENTITY_INSERT Categories ON; -- Column names must be specified in insert statements
+SET IDENTITY_INSERT Categories ON;
 INSERT INTO Categories (Description, Name, Id) VALUES ('Soft drinks','Beverages',1);
 INSERT INTO Categories (Description, Name, Id) VALUES ('Breads','Grains/Cereals',2);
 INSERT INTO Categories (Description, Name, Id) VALUES ('Prepared meats','Meat/Poultry',3);
@@ -36,7 +30,7 @@ INSERT INTO Categories (Description, Name, Id) VALUES ('Cheeses','Dairy Products
 INSERT INTO Categories (Description, Name, Id) VALUES ('Desserts','Confections',8);
 SET IDENTITY_INSERT Categories OFF;
 
-SET IDENTITY_INSERT Products ON; -- Column names must be specified in insert statements
+SET IDENTITY_INSERT Products ON;
 INSERT INTO Products (QuantityPerUnit, UnitPrice, CategoryId, Name, Discontinued, Id) VALUES ('10 boxes x 20 bags',39,1,'Chai',0,1);
 INSERT INTO Products (QuantityPerUnit, UnitPrice, CategoryId, Name, Discontinued, Id) VALUES ('24 - 12 oz bottles',19,1,'Chang',1,2);
 INSERT INTO Products (QuantityPerUnit, UnitPrice, CategoryId, Name, Discontinued, Id) VALUES ('12 - 550 ml bottles',10,6,'Aniseed Syrup',0,3);

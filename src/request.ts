@@ -3,7 +3,7 @@ import * as sql from "mssql";
 const dbConfig = {
     driver: "msnodesqlv8",
     server: "DESKTOP-SZABOF",
-    database: "northwind_mssql_test_db",
+    database: "northwind",
     user: "sa",
     password: "QWEasd123%"
 };

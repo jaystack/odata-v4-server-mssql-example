@@ -144,6 +144,7 @@ export class ProductsController extends ODataController {
 
 @odata.type(Category)
 export class CategoriesController extends ODataController {
+
     @odata.GET
     async find( @odata.stream stream, @odata.query query: ODataQuery): Promise<Category[]|void> {
         const request = await mssqlRequest();

@@ -9,9 +9,11 @@
   },
   "scripts": {
     "build": "npm run tsc",
+    "start": "node .",
     "tsc": "tsc",
     "tsc:w": "tsc -w",
     "test": "mocha test/*.spec.js --reporter mochawesome --reporter-options reportDir=report,reportName=odata-v4-server,reportTitle=\"OData V4 Server\"",
+    "prestart": "npm run build",
     "pretest": "npm run build"
   },
   "repository": {
