@@ -667,6 +667,9 @@ describe("OData V4 example server", () => {
         });
 
         it("should delete product reference on category", () => {
+            after(() => { // keep the db at default state for sure
+                return NorthwindServer.execute("/initDb", "POST");
+            });
             return NorthwindServer.execute("/Categories(1)/Products/$ref?$id=http://localhost/Products(1)", "DELETE").then((result) => {
                 expect(result).to.deep.equal({
                     statusCode: 204
