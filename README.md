@@ -38,7 +38,10 @@ Alternately if you start unit tests (`npm test`) then the database will be initi
 
 ## Remarks
 ### Default data sorting
-Unlike other database systems, MS SQL Server will not order your recordset by primary key or insertion date by default. Therefore two unit tests
+Unlike other database systems, MS SQL Server will not order your recordset by default.
+(Some database systems 'use' an implicit default ordering depending on indexes used in the query and in what order they are used.
+This implicit sorting can change as the data/statistics change and the optimizer chooses different plans. In MS SQL Server this implicit ordering is missing.)
+Therefore two unit tests
 (for [/Products](localhost:3000/Products) and [/Categories](localhost:3000/Categories)) got to be 'hacked' to sort the resulting data.
 
 If you want a default sorting eg. on 'Id' then you can acheive it
