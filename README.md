@@ -1,7 +1,21 @@
 # odata-v4-server-mssql-example
-MS SQL Server example for odata-v4-server
+MS SQL Server example for **odata-v4-server**
 
-## Setting up the database
+## About odata-v4-server
+This example uses Jaystack's [**odata-v4-server**](https://github.com/jaystack/odata-v4-server) and [odata-v4-mssql](https://github.com/jaystack/odata-v4-mssql) repositories.
+
+Jaystack's **odata-v4-server** is ...
+
+You can read more about **odata-v4-server** in our tutorial at ...
+
+Also there are sevaral other examples on **odata-v4-server**:
+- [client example using React](https://github.com/jaystack/odata-v4-client-examples)
+- [server example using MySql](https://github.com/jaystack/odata-v4-mysql-example)
+- [server example using PostgreSql](https://github.com/jaystack/odata-v4-server-pgsql-example)
+- [server example using MongoDb](https://github.com/jaystack/odata-v4-server-mongodb-example)
+
+## Technical details of this example
+### Setting up the database
 You have to create the database manually using these commands:
 ```SQL
 USE master;
@@ -12,7 +26,7 @@ CREATE DATABASE northwind;
 Go
 ```
 
-## Setting up the connection string to your MS SQL Server
+### Setting up the connection string to your MS SQL Server
 You have to customize the db connection options
 by editing [request.ts](https://github.com/jaystack/odata-v4-server-mssql-example/blob/master/src/request.ts#L3-L9).
 By default, these are the options:
@@ -28,16 +42,16 @@ const dbConfig = {
 ```
 By default, the server will listen on `port` `1433` therefore it is not set above.
 
-## Starting the sample application
+### Starting the sample application
 Use command `npm start`
 
-## Creating sample data
+### Creating sample data
 After starting the application (it will listen on `localhost:3000` by default) you can generate / recreate the sample dataset
 by submitting [localhost:3000/initDb](http://localhost:3000/initDb).
-Alternately if you start unit tests (`npm test`) then the database will be initialized automatically.
+Alternatively if you start unit tests (`npm test`) then the database will be initialized automatically.
 
-## Remarks
-### Default data sorting
+### Remarks
+#### Default data sorting
 Unlike other database systems, MS SQL Server will not order your recordset by default.
 (Some database systems 'use' an implicit default ordering depending on indexes used in the query and in what order they are used.
 This implicit sorting can change as the data/statistics change and the optimizer chooses different plans. In MS SQL Server this implicit ordering is missing.)
