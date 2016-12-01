@@ -35,13 +35,13 @@
   "license": "ISC",
   "devDependencies": {
     "@types/express": "^4.0.34",
+    "@types/mssql": "^3.1.30",
     "chai": "^3.5.0",
     "mocha": "^3.2.0",
     "mochawesome": "^1.5.4",
     "typescript": "^2.0.10"
   },
   "dependencies": {
-    "@types/mssql": "^3.1.30",
     "express": "^4.14.0",
     "msnodesqlv8": "^0.2.10",
     "mssql": "^3.3.0",
