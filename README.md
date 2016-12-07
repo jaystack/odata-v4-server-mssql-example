@@ -4,7 +4,7 @@ MS SQL Server example for **[JayStack OData V4 Server](https://github.com/jaysta
 ## About odata-v4-server
 This example uses **JayStack OData V4 Server [(odata-v4-server)](https://github.com/jaystack/odata-v4-server)** and [odata-v4-mssql](https://github.com/jaystack/odata-v4-mssql) repositories.
 
-You can read more about **odata-v4-server** in our tutorial at ...
+You can read more about **JayStack OData V4 Server** in our tutorial at ...
 
 Also there are sevaral other examples on **JayStack OData V4 Server (odata-v4-server)**:
 - [client example using React, etc. ---  to be checked](https://github.com/jaystack/odata-v4-client-examples)
