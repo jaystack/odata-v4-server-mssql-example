@@ -1,7 +1,7 @@
 # odata-v4-server-mssql-example
 MS SQL Server example for **[JayStack OData V4 Server](https://github.com/jaystack/odata-v4-server)**
 
-## About odata-v4-server
+## About JayStack OData V4 Server (odata-v4-server)
 This example uses **JayStack OData V4 Server [(odata-v4-server)](https://github.com/jaystack/odata-v4-server)** and [odata-v4-mssql](https://github.com/jaystack/odata-v4-mssql) repositories.
 
 You can read more about **JayStack OData V4 Server** in our tutorial at ...
