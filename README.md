@@ -7,7 +7,7 @@ This example uses **JayStack OData V4 Server [(odata-v4-server)](https://github.
 You can read more about **JayStack OData V4 Server** in our tutorial at ...
 
 Also there are sevaral other examples on **JayStack OData V4 Server (odata-v4-server)**:
-- [client example using React, etc. ---  to be checked](https://github.com/jaystack/odata-v4-client-examples)
+- [client example using React](https://github.com/jaystack/odata-v4-server-react-client-example)
 - [server example using MySql](https://github.com/jaystack/odata-v4-mysql-example)
 - [server example using PostgreSql](https://github.com/jaystack/odata-v4-server-pgsql-example)
 - [server example using MongoDb](https://github.com/jaystack/odata-v4-server-mongodb-example)
@@ -38,7 +38,7 @@ const dbConfig = {
     password: "***"           // your system administrator's password
 };
 ```
-By default, the database will listen on `port` `1433` therefore it is not set above.
+By default, the server will listen on `port` `1433` therefore it is not set above.
 
 
 ### Building the application
