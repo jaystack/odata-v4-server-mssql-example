@@ -40,8 +40,24 @@ const dbConfig = {
 ```
 By default, the database will listen on `port` `1433` therefore it is not set above.
 
-### Starting the sample application
-Use command `npm start`
+
+### Building the application
+Use command:
+```
+npm run build
+```
+
+### testing the application
+Use command:
+```
+npm test
+```
+
+### Starting the application
+Use command:
+```
+npm start
+```
 
 ### Creating sample data
 After starting the application (it will listen on `localhost:3000` by default) you can generate / recreate the sample dataset
