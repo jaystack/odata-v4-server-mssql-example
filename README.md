@@ -38,7 +38,7 @@ const dbConfig = {
     password: "***"           // your system administrator's password
 };
 ```
-By default, the server will listen on `port` `1433` therefore it is not set above.
+By default, the database will listen on `port` `1433` therefore it is not set above.
 
 ### Starting the sample application
 Use command `npm start`
