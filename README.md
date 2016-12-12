@@ -2,6 +2,8 @@
 MS SQL Server example for **[JayStack OData V4 Server](http://jaydata.org/jaystack-odata-v4-server)**
 
 ## About JayStack OData V4 Server (odata-v4-server)
+JayStack OData v4 Server lets you build your own services without the hassle of implementing protocol-level code. This framework binds OData v4 requests to your annotated controller functions and builds OData v4 compatible response. Clients can access service through OData-conform HTTP requests, we recommend JayData library for consuming OData v4 APIs.
+
 This example uses **JayStack OData V4 Server [(odata-v4-server)](http://jaydata.org/jaystack-odata-v4-server)** and [odata-v4-mssql](https://github.com/jaystack/odata-v4-mssql) libraries.
 
 You build your own OData v4 compatible service step-by-step by following this [tutorial](http://jaydata.org/blog/jaystack-odata-v4-server-with-mongodb-tutorial)
