@@ -1,12 +1,12 @@
 # odata-v4-server-mssql-example
-MS SQL Server example for **[JayStack OData V4 Server](https://github.com/jaystack/odata-v4-server)**
+MS SQL Server example for **[JayStack OData V4 Server](http://jaydata.org/jaystack-odata-v4-server)**
 
 ## About JayStack OData V4 Server (odata-v4-server)
-This example uses **JayStack OData V4 Server [(odata-v4-server)](https://github.com/jaystack/odata-v4-server)** and [odata-v4-mssql](https://github.com/jaystack/odata-v4-mssql) repositories.
+This example uses **JayStack OData V4 Server [(odata-v4-server)](http://jaydata.org/jaystack-odata-v4-server)** and [odata-v4-mssql](https://github.com/jaystack/odata-v4-mssql) libraries.
 
-You can read more about **JayStack OData V4 Server** in our tutorial at ...
+You build your own OData v4 compatible service step-by-step by following this [tutorial](http://jaydata.org/blog/jaystack-odata-v4-server-with-mongodb-tutorial)
 
-Also there are sevaral other examples on **JayStack OData V4 Server (odata-v4-server)**:
+Also there are sevaral client examples on **JayStack OData V4 Server (odata-v4-server)**:
 - [client example using React](https://github.com/jaystack/odata-v4-server-react-client-example)
 - [server example using MySql](https://github.com/jaystack/odata-v4-mysql-example)
 - [server example using PostgreSql](https://github.com/jaystack/odata-v4-server-pgsql-example)
