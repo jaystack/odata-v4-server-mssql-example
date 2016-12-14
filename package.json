@@ -45,6 +45,6 @@
     "msnodesqlv8": "^0.2.10",
     "mssql": "^3.3.0",
     "odata-v4-mssql": "^0.1.0",
-    "odata-v4-server": "rc"
+    "odata-v4-server": "^0.1.15"
   }
 }
